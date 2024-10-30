@@ -1,109 +1,107 @@
-version: '3'
-
 services:
+  # Hadoop Namenode
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
-    environment:
-      CLUSTER_NAME: test-cluster
-      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
+    restart: always
     ports:
-      - 9870:9870
-      - 9000:9000
+      - '9870:9870'  # Interfaz web del NameNode
+      - '9000:9000'  # Conexiones HDFS
     volumes:
-      - namenode:/hadoop/dfs/name
+      - hadoop_namenode:/hadoop/dfs/name
+    environment:
+      CLUSTER_NAME: test
+      HDFS_NAMENODE_USER: root
+      HDFS_DATANODE_USER: root
+      YARN_NODEMANAGER_USER: root
+      YARN_RESOURCEMANAGER_USER: root
     networks:
-      - hadoop
-    command: ["sh", "-c", "hdfs namenode -format && /etc/bootstrap.sh -d"]
+      - shared_network
 
+  # Hadoop DataNode 1
   datanode1:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode1
+    restart: always
+    volumes:
+      - hadoop_datanode1:/hadoop/dfs/data
     environment:
       CORE_CONF_fs_defaultFS: hdfs://namenode:9000
-      DATA_CONF_dfs_datanode_data_dir: file:///hadoop/dfs/data
-    volumes:
-      - datanode1:/hadoop/dfs/data
+      SERVICE_PRECONDITION: "namenode:9000"
+      HDFS_NAMENODE_USER: root
+      HDFS_DATANODE_USER: root
+      YARN_NODEMANAGER_USER: root
+      YARN_RESOURCEMANAGER_USER: root
     networks:
-      - hadoop
+      - shared_network
     depends_on:
       - namenode
 
+  # Hadoop DataNode 2
   datanode2:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode2
+    restart: always
+    volumes:
+      - hadoop_datanode2:/hadoop/dfs/data
     environment:
       CORE_CONF_fs_defaultFS: hdfs://namenode:9000
-      DATA_CONF_dfs_datanode_data_dir: file:///hadoop/dfs/data
-    volumes:
-      - datanode2:/hadoop/dfs/data
+      SERVICE_PRECONDITION: "namenode:9000"
+      HDFS_NAMENODE_USER: root
+      HDFS_DATANODE_USER: root
+      YARN_NODEMANAGER_USER: root
+      YARN_RESOURCEMANAGER_USER: root
     networks:
-      - hadoop
+      - shared_network
     depends_on:
       - namenode
 
-  datanode3:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: datanode3
-    environment:
-      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
-      DATA_CONF_dfs_datanode_data_dir: file:///hadoop/dfs/data
-    volumes:
-      - datanode3:/hadoop/dfs/data
-    networks:
-      - hadoop
-    depends_on:
-      - namenode
-
+  # ResourceManager
   resourcemanager:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     container_name: resourcemanager
+    restart: always
     environment:
       CORE_CONF_fs_defaultFS: hdfs://namenode:9000
       YARN_CONF_yarn_resourcemanager_hostname: resourcemanager
-    ports:
-      - 8088:8088
-    volumes:
-      - ./data:/mnt/hadoop
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864"
+      HDFS_NAMENODE_USER: root
+      HDFS_DATANODE_USER: root
+      YARN_NODEMANAGER_USER: root
+      YARN_RESOURCEMANAGER_USER: root
     networks:
-      - hadoop
+      - shared_network
     depends_on:
       - namenode
       - datanode1
       - datanode2
-      - datanode3
-    command: ["sh", "-c", "cp /mnt/hadoop/hadoop-mapreduce-examples-3.2.1.jar /opt/hadoop/share/hadoop/mapreduce/"]
 
-  nodemanager:
-    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
-    container_name: nodemanager
-    environment:
-      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
-    networks:
-      - hadoop
-    depends_on:
-      - resourcemanager
-
+  # HistoryServer
   historyserver:
     image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
     container_name: historyserver
+    restart: always
     environment:
       CORE_CONF_fs_defaultFS: hdfs://namenode:9000
+      SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode1:9864 datanode2:9864 resourcemanager:8088"
+      HDFS_NAMENODE_USER: root
+      HDFS_DATANODE_USER: root
+      YARN_NODEMANAGER_USER: root
+      YARN_RESOURCEMANAGER_USER: root
     volumes:
-      - historyserver:/hadoop/mapred
+      - hadoop_historyserver:/hadoop/yarn/timeline
     networks:
-      - hadoop
+      - shared_network
     depends_on:
       - namenode
       - resourcemanager
-    command: ["sh", "-c", "/etc/bootstrap.sh -d && hdfs dfs -mkdir -p /user/Alumno_AI && hdfs dfs -put /mnt/hadoop/archivo.txt /user/Alumno_AI/"]
 
 volumes:
-  namenode:
-  datanode1:
-  datanode2:
-  datanode3:
-  historyserver:
+  hadoop_namenode:
+  hadoop_datanode1:
+  hadoop_datanode2:
+  hadoop_historyserver:
 
 networks:
-  hadoop:
+  shared_network:
+    external: true
