@@ -69,6 +69,34 @@ Y luego ver el contenido del archivo de resultados:
 docker exec -it namenode hdfs dfs -cat /user/Alumno_AI/output/part-r-00000
 ```
 
+## HDFS (Hadoop Distributed File System)
+
+HDFS es el sistema de almacenamiento distribuido de Hadoop. Está diseñado para manejar grandes volúmenes de datos dividiéndolos en bloques y distribuyéndolos en múltiples nodos.
+
+- **Distribución de Datos**: Los archivos se dividen en bloques (por defecto de 128 MB) y se distribuyen en diferentes nodos para mejorar la disponibilidad y la eficiencia.
+- **Tolerancia a Fallos**: Cada bloque se replica (por defecto, 3 réplicas) para asegurar la disponibilidad en caso de fallo de un nodo.
+- **Arquitectura Maestro-Esclavo**: Un **NameNode** administra la ubicación de los bloques, mientras que los **DataNodes** almacenan los bloques reales.
+
+## MapReduce
+
+MapReduce es un modelo de programación que permite el procesamiento paralelo de grandes volúmenes de datos. Está basado en dos fases principales: **Map** y **Reduce**.
+
+- **Fase Map**: Divide la tarea en sub-tareas más pequeñas y paralelas. Cada sub-tarea procesa un bloque de datos y produce pares clave-valor.
+- **Fase Reduce**: Toma los pares clave-valor producidos por las tareas de Map y las combina para producir resultados finales.
+
+**Ejemplo**: En el ejemplo de **WordCount**, la fase **Map** divide el texto en palabras y las cuenta, mientras que la fase **Reduce** suma los conteos de cada palabra.
+
+## YARN (Yet Another Resource Negotiator)
+
+YARN es el componente de Hadoop encargado de la gestión de recursos y la planificación de tareas. Actúa como un sistema operativo para el clúster de Hadoop.
+
+- **Gestión de Recursos**: Asigna recursos (CPU, memoria) a las aplicaciones que lo requieren.
+- **Planificación de Tareas**: Distribuye y gestiona las tareas de diferentes aplicaciones (como MapReduce).
+- **Componentes de YARN**:
+  - **ResourceManager**: Coordina la asignación de recursos entre todas las aplicaciones del clúster.
+  - **NodeManager**: Ejecuta las tareas en cada nodo y reporta al ResourceManager.
+  - **ApplicationMaster**: Gestiona las tareas específicas de cada aplicación.
+
 ## Resolución de Problemas
 
 ### Error de Conexión Entre NameNode y DataNodes
